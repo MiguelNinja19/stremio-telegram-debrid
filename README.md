@@ -399,32 +399,27 @@ docker-compose up --build
 ```
 
 ### Option C: Self-Hosting on VPS (Viren070's Docker Template)
-If you self-host your addons using Viren070's docker-compose template, you can easily integrate this addon:
 
-1. Create a directory named 'stremio-telegram-debrid' inside your 'apps/' folder.
-2. Create a 'compose.yaml' file in that directory. You can download our pre-configured [compose.yaml](file:///c:/Users/roy/Desktop/stremio-telegram-debrid/deployment/vps/compose.yaml) template directly by running:
-   ```bash
-   curl -s https://raw.githubusercontent.com/SunilRoy-dev/stremio-telegram-debrid/main/deployment/vps/compose.yaml -o apps/stremio-telegram-debrid/compose.yaml
-   ```
-   Or create the file manually with the following configuration:
+If you self-host your addons using [Viren070/docker-compose-template](https://github.com/Viren070/docker-compose-template), you can deploy this addon in 3 simple steps:
 
+#### Step 1: Create the App Folder and Files
+On your VPS, navigate to your cloned `docker-compose-template` directory (typically `/opt/docker`) and run the following command to create the directory and download our pre-configured `compose.yaml`:
+```bash
+mkdir -p apps/stremio-telegram-debrid
+curl -s https://raw.githubusercontent.com/SunilRoy-dev/stremio-telegram-debrid/main/deployment/vps/compose.yaml -o apps/stremio-telegram-debrid/compose.yaml
+```
+
+Or you can create the file `apps/stremio-telegram-debrid/compose.yaml` manually with the following configuration:
 ```yaml
 services:
   stremio-telegram-debrid:
     container_name: stremio-telegram-debrid
     image: ghcr.io/sunilroy-dev/stremio-telegram-debrid:latest
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       - PORT=7860
-      - API_ID=${TELEGRAM_API_ID}
-      - API_HASH=${TELEGRAM_API_HASH}
-      - BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - USER_SESSION_STRING=${TELEGRAM_USER_SESSION_STRING}
-      - TELEGRAM_CHANNEL_ID=${TELEGRAM_CHANNEL_ID}
-      - LOG_CHANNEL_ID=${TELEGRAM_LOG_CHANNEL_ID}
-      - API_KEY=${ADDON_API_KEY}
-      - CACHE_TTL=${ADDON_CACHE_TTL}
-      - TIMEZONE=${ADDON_TIMEZONE}
     profiles:
       - stremio-telegram-debrid
       - debrid
@@ -435,7 +430,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.stremio-telegram-debrid.rule=Host('stremio-tg.${DOMAIN}')"
       - "traefik.http.routers.stremio-telegram-debrid.entrypoints=websecure"
-      - "traefik.http.routers.stremio-telegram-debrid.tls.certresolver=http"
+      - "traefik.http.routers.stremio-telegram-debrid.tls.certresolver=letsencrypt"
       - "traefik.http.services.stremio-telegram-debrid.loadbalancer.server.port=7860"
 
   stremio-telegram-debrid-updater:
@@ -455,9 +450,45 @@ networks:
     external: true
 ```
 
-3. Configure the environment variables in your global '.env' file, activate the 'stremio-telegram-debrid' profile, and run your deployment.
+#### Step 2: Configure the App Environment Variables
+Create a file named `apps/stremio-telegram-debrid/.env`. You can download our sample `.env.example` template directly by running:
+```bash
+curl -s https://raw.githubusercontent.com/SunilRoy-dev/stremio-telegram-debrid/main/.env.example -o apps/stremio-telegram-debrid/.env
+```
+Or create it manually and configure your credentials:
+```env
+# Telegram Credentials
+API_ID=your_api_id
+API_HASH=your_api_hash
+TELEGRAM_CHANNEL_ID=-100xxxxxxxxxx
 
----
+# Choose one: Use either User Session (recommended) or Bot Token
+USER_SESSION_STRING=your_session_string
+BOT_TOKEN=your_bot_token
+
+# Addon Settings
+API_KEY=your_addon_api_key
+ADDON_URL=https://stremio-tg.yourdomain.com
+```
+*(Replace `yourdomain.com` with your actual domain)*
+
+#### Step 3: Register and Run the Addon
+1. Open the **root `compose.yaml`** file at the root of your `docker-compose-template` directory, and add our app path under the `include:` section:
+   ```yaml
+   include:
+     # ... existing apps ...
+     - apps/stremio-telegram-debrid/compose.yaml
+   ```
+2. Open the **root `.env`** file at the root of your template, and ensure `addon` is included in your `COMPOSE_PROFILES` so it starts automatically:
+   ```env
+   COMPOSE_PROFILES=required,addon
+   ```
+3. Start the addon by running:
+   ```bash
+   docker compose up -d
+   ```
+
+
 
 ## How to Install in Stremio
 

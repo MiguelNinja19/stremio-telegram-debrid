@@ -3,17 +3,10 @@ services:
     container_name: stremio-telegram-debrid
     image: ghcr.io/sunilroy-dev/stremio-telegram-debrid:latest
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       - PORT=7860
-      - API_ID=${TELEGRAM_API_ID}
-      - API_HASH=${TELEGRAM_API_HASH}
-      - BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - USER_SESSION_STRING=${TELEGRAM_USER_SESSION_STRING}
-      - TELEGRAM_CHANNEL_ID=${TELEGRAM_CHANNEL_ID}
-      - LOG_CHANNEL_ID=${TELEGRAM_LOG_CHANNEL_ID}
-      - API_KEY=${ADDON_API_KEY}
-      - CACHE_TTL=${ADDON_CACHE_TTL}
-      - TIMEZONE=${ADDON_TIMEZONE}
     profiles:
       - stremio-telegram-debrid
       - debrid
@@ -24,7 +17,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.stremio-telegram-debrid.rule=Host('stremio-tg.${DOMAIN}')"
       - "traefik.http.routers.stremio-telegram-debrid.entrypoints=websecure"
-      - "traefik.http.routers.stremio-telegram-debrid.tls.certresolver=http"
+      - "traefik.http.routers.stremio-telegram-debrid.tls.certresolver=letsencrypt"
       - "traefik.http.services.stremio-telegram-debrid.loadbalancer.server.port=7860"
 
   stremio-telegram-debrid-updater:
